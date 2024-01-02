@@ -9,3 +9,7 @@ class TaskListCreateSerializers(serializers.ModelSerializer):
         fields = ('pk', 'title', 'user')
         extra_kwargs = {'user': {'write_only': True}}
 
+class TaskListDetailSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = TaskList
+        fields = ('pk', 'title')
