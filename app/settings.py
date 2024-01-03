@@ -172,3 +172,24 @@ SWAGGER_SETTINGS = {
     },
     'JSON_EDITOR': True,  # Enable JSON editor for request/response bodies
 }
+
+# Start logging settings
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+# End logging settings

@@ -20,6 +20,9 @@ def get_global_success_messages():
         "LOGIN_SUCCESSFUL": "Login successful.",
         "LOGOUT_SUCCESSFUL": "Logout successful.",
         "NEW_USER_CREATED": "New user created successfully.",
+        "RECORD_RETRIEVED": "Record retrieved successfully.",
+        "RECORD_UPDATED": "Record updated successfully.",
+        "RECORD_DELETED": "Record deleted successfully.",
 
     }
 

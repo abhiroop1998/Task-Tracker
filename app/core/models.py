@@ -34,6 +34,12 @@ class TaskList(models.Model):
     title = models.CharField(max_length=200, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    # Additional field declarations
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    is_active = models.BooleanField(default=True)
+
 
 class Task(models.Model):
     class Priority(models.TextChoices):
@@ -42,8 +48,14 @@ class Task(models.Model):
         HIGH = 'high', _('High')
 
     title = models.CharField(max_length=200, blank=True)
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True)
     due_date = models.DateTimeField(blank=True, null=True)
     priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.LOW)
     status = models.BooleanField(default=False)
     task_list = models.ForeignKey(TaskList, on_delete=models.CASCADE)
+
+    # Additional field declarations
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    is_active = models.BooleanField(default=True)
