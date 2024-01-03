@@ -7,13 +7,16 @@ from app.core.models import TaskList, Task
 from app.utils import get_response_schema, get_global_success_messages, get_global_error_messages
 from app.tasklist.serializers import (
     TaskListCreateSerializers,
-    TaskListDetailSerializers
+    TaskListDetailSerializers, TaskListDisplaySerialzers
 )
 
 # Swagger imports
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -56,12 +59,16 @@ class TaskListDetailApiView(GenericAPIView):
     @swagger_auto_schema()
     def get(self, request, pk=None):
 
+        task = Task.objects.select_related('task_list').filter(task_list_id=pk, is_active=True)
         task_list = self.get_object(pk, request)
-
-        if task_list:
-            serializer = TaskListDetailSerializers(task_list)
-            return get_response_schema(serializer.data, get_global_success_messages()['RECORD_RETRIEVED'],
-                                       status.HTTP_200_OK)
+        if task_list and task:
+            task_list_serializer = TaskListDetailSerializers(task_list)
+            task_serializer = TaskListDisplaySerialzers(task, many=True)
+            data = {
+                **task_list_serializer.data,
+                'task': task_serializer.data
+            }
+            return get_response_schema(data, get_global_success_messages()['RECORD_RETRIEVED'], status.HTTP_200_OK)
         return get_response_schema({}, get_global_error_messages()['BAD_REQUEST'], status.HTTP_404_NOT_FOUND)
 
 
