@@ -18,3 +18,9 @@ class TaskListDisplaySerialzers(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = ('pk', 'title', 'description', 'due_date', 'priority', 'status',)
+
+
+class TaskListFilterSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = TaskList
+        fields = ('pk', 'title')

@@ -1,13 +1,14 @@
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from app.core.models import TaskList, Task
+from app.core.views import CustomPageNumberPagination
 from app.utils import get_response_schema, get_global_success_messages, get_global_error_messages
 from app.tasklist.serializers import (
     TaskListCreateSerializers,
-    TaskListDetailSerializers, TaskListDisplaySerialzers
+    TaskListDetailSerializers, TaskListDisplaySerialzers, TaskListFilterSerializers
 )
 
 # Swagger imports
@@ -17,6 +18,7 @@ from drf_yasg import openapi
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 # Create your views here.
 
@@ -46,7 +48,6 @@ class TasklistCreateApiView(GenericAPIView):
 
 
 class TaskListDetailApiView(GenericAPIView):
-
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
@@ -56,10 +57,11 @@ class TaskListDetailApiView(GenericAPIView):
             return TaskList.objects.get(id=pk, user_id=self.request.user.id, is_active=True)
         except TaskList.DoesNotExist:
             return None
+
     @swagger_auto_schema()
     def get(self, request, pk=None):
 
-        task = Task.objects.select_related('task_list').filter(task_list_id=pk, is_active=True)
+        task = Task.objects.select_related('task_list').filter(task_list_id=pk, is_active=True, status=True)
         task_list = self.get_object(pk, request)
         if task_list and task:
             task_list_serializer = TaskListDetailSerializers(task_list)
@@ -70,7 +72,6 @@ class TaskListDetailApiView(GenericAPIView):
             }
             return get_response_schema(data, get_global_success_messages()['RECORD_RETRIEVED'], status.HTTP_200_OK)
         return get_response_schema({}, get_global_error_messages()['BAD_REQUEST'], status.HTTP_404_NOT_FOUND)
-
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -101,9 +102,37 @@ class TaskListDetailApiView(GenericAPIView):
         if task_list:
             task_list.is_active = False
             task_list.save()
-            task_queryset = Task.objects.filter(task_list_id=pk)
+            task_queryset = Task.objects.filter(task_list_id=pk, status=True, is_active=True)
             if task_queryset:
                 task_queryset.update(is_active=False)
 
             return get_response_schema({}, get_global_success_messages()['RECORD_DELETED'], status.HTTP_200_OK)
         return get_response_schema({}, get_global_error_messages()['BAD_REQUEST'], status.HTTP_404_NOT_FOUND)
+
+
+class TaskListFilterView(ListAPIView):
+    serializer_class = TaskListFilterSerializers
+    pagination_class = CustomPageNumberPagination
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+
+        task_list_queryset = TaskList.objects.filter(user_id=self.request.user.id, is_active=True)
+
+        if self.request.GET.get('title'):
+            task_list_queryset = task_list_queryset.filter(title__icontains=self.request.GET.get('title'))
+
+        if not task_list_queryset:
+            return []
+
+        return task_list_queryset
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('title', openapi.IN_QUERY, type=openapi.TYPE_STRING),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
